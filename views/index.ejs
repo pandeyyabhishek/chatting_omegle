@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Room Chatting App</title>
+
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+      }
+
+      #main {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background-color: black;
+      }
+      .chatContainer {
+        width: 60%;
+        height: 80vh;
+        margin: 10px 10px 0 10px;
+        background-color: #282828;
+        display: none;
+        border-radius: 12px;
+      }
+      .chats {
+        padding: 2vw;
+        width: 100%;
+        height: 70%;
+        overflow-y: auto;
+        /* background-color: rgba(128, 128, 128, 0.308); */
+      }
+      .chatForm {
+        width: 100%;
+        /* padding: 1rem 3rem; */
+        height: 20%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        border-top: 1px solid white;
+      }
+
+      .chatForm input {
+        height: 3rem;
+        width: 80%;
+        padding: 1rem;
+        border-radius: 20px;
+        border: none;
+        color: white;
+        font-size: 1.3rem;
+        background: #425562;
+      }
+      .chatForm button {
+        padding: 8px 15px;
+        border-radius: 15px;
+        border: none;
+      }
+      .messages {
+        width: fit-content;
+        min-height: 2rem;
+        background-color: gray;
+        padding: 20px 12px;
+        margin-bottom: 5px;
+        word-break: break-word;
+        border-radius: 10px;
+        font-size: 1.2rem;
+      }
+      .wrap {
+        width: 100%;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: end;
+      }
+      .sendMessage {
+        text-align: start;
+        background: #005c4b;
+        color: white;
+        margin-bottom: 5px;
+      }
+      .receivedMessage {
+        text-align: start;
+        color: white;
+        background-color: #1b2328;
+      }
+      .joiningWindow {
+        height: 70vh;
+        width: 100vw;
+        /* position: absolute; */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: black;
+      }
+      .joinChatBox {
+        width: 40vw;
+        height: 40vh;
+        border-radius: 20px;
+        background-color: rgba(164, 160, 160, 0.17);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: white;
+        font-size: 1.7rem;
+      }
+      .joinChatBox button {
+        padding: 8px 15px;
+        border-radius: 15px;
+        border: none;
+      }
+      .enterName {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 80px;
+        gap: 1vw;
+      }
+      .enterName > input {
+        height: 30px;
+        border-radius: 10px;
+        padding: 5px 7px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:active {
+        scale: 0.97;
+      }
+      .chatForm > input::placeholder {
+        color: white;
+      }
+      header {
+        background-color: #3333337b;
+        border-radius: 12px;
+        padding: 5px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        overflow: hidden;
+        color: white;
+      }
+      .chats::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <div class="joiningWindow">
+        <form class="joinChatBox">
+          <div class="enterName">
+            <label for="username">Enter Name :</label>
+            <input
+              placeholder="Enter name"
+              class="username"
+              type="text"
+              autocomplete="off" />
+          </div>
+          <button type="submit">Join to random</button>
+        </form>
+      </div>
+
+      <div class="chatContainer">
+        <header>
+          <p id="username">UserName :</p>
+          <p id="connectedTo">Connected to:</p>
+        </header>
+        <div class="chats">
+          <!-- <div class="receivedMessage messages">Hellooo</div> -->
+          <!-- <div class="wrap">
+            <div class="sendMessage messages">Hiii</div>
+          </div> -->
+          <div class="wrap">
+            <div class="messages">Waiting for someone to join</div>
+          </div>
+        </div>
+        <form class="chatForm">
+          <input
+            placeholder="Enter Message"
+            class="chatInput"
+            type="text"
+            name="msg" />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+
+    <script
+      src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+      integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+      crossorigin="anonymous"></script>
+
+    <script>
+      const chatForm = document.querySelector(".chatForm");
+      const chats = document.querySelector(".chats");
+      let username = null;
+      let globalSocket = null;
+      let roomId = null;
+      let connectedTo = "";
+
+      //function calls
+      stopFormReloadJoinChat();
+      stopFormReload();
+
+      //socket code
+      function socketCode(socket) {
+        // let username = document.querySelector(".username").value;
+        socket.on("connect", () => {
+          // console.log("socket is turned on ");
+          // socket.emit("newUserJoined", username);
+
+          socket.on("connectedTo", (username) => {
+            // console.log("connected to", username);
+            connectedTo = username;
+            document.querySelector("#connectedTo").textContent =
+              "Connected To: " + username;
+          });
+          socket.emit("joinroom", username);
+          // socket.emit('username',username);
+          socket.on("messageFromServer", (val) => {
+            // console.log(val, "chrkc");
+            chats.innerHTML += `<div class="receivedMessage messages">${
+              connectedTo + ": "
+            }${val}</div>`;
+          });
+          socket.on("joinedInRoom", (romId) => {
+            roomId = romId;
+            // console.log("User joined in room with id: ", roomId);
+            chats.innerHTML = "";
+          });
+
+          socket.on("createNew", () => {
+            console.log("you have to connect with another.");
+            document.querySelector("#connectedTo").textContent =
+              "Connected to:";
+            chats.innerHTML = ` <div class="wrap">
+            <div class="messages">Waiting for someone to join</div>
+          </div>`;
+            socket.emit("joinroom", username);
+          });
+        });
+      }
+
+      //functions
+      function stopFormReload() {
+        chatForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          let chatInputMessage = document.querySelector(".chatInput").value;
+
+          if (roomId != null) {
+            emitChatMessageToServer(chatInputMessage, roomId);
+          }
+          document.querySelector(".chatInput").value = "";
+        });
+      }
+
+      function stopFormReloadJoinChat() {
+        document
+          .querySelector(".joinChatBox")
+          .addEventListener("submit", (event) => {
+            event.preventDefault();
+            username = document.querySelector(".username").value;
+            document.querySelector("#username").textContent += " " + username;
+            document.querySelector(".chatContainer").style.display = "block";
+            document.querySelector(".joiningWindow").style.display = "none";
+            //socket intialization..
+            const socket = io();
+            globalSocket = socket;
+            socketCode(socket);
+          });
+      }
+
+      function emitChatMessageToServer(val, roomId) {
+        chats.innerHTML += `<div class="wrap">
+            <div class="sendMessage messages">${val}</div>
+          </div>`;
+        globalSocket.emit("chatMessage", { val, roomId });
+      }
+    </script>
+  </body>
+</html>
