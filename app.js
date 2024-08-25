@@ -10,14 +10,23 @@ app.set('view engine', 'ejs');
 app.get('/', (req, res) => {
     return res.render('index');
 })
+app.get('*', (req, res) => {
+    return res.redirect('/');
+})
 
 let waitingUser = [];
 const usersId = [], usersName = [];
 let roomIdObj = {};  //it store socket id1 & 2 with room Id
 let sockettoroom = {};
+let cnt = 0;
 //har do user ke liye ek room create kr ke join karwayege.
 io.on('connection', (socket) => {
+    socket.on('newUserJoined', () => {
+        cnt++;
+        io.emit('totalUser', cnt);
+    })
     socket.on('joinroom', (username) => {
+
         if (usersId.indexOf(socket.id) == -1) {
             usersId.push(socket.id);
             usersName.push(username);
@@ -54,8 +63,14 @@ io.on('connection', (socket) => {
         const message = data.val;
         socket.broadcast.to(roomId).emit('messageFromServer', message);
     })
-
+    socket.on('typing', () => {
+        let roomId = sockettoroom[socket.id];
+        socket.broadcast.to(roomId).emit('typing');
+    })
     socket.on('disconnect', () => {
+        if (cnt > 0)
+            cnt--;
+        io.emit('totalUser', cnt);
         const i = socket.id;
         const tempInd = usersId.indexOf(i);
         if (tempInd != -1) {

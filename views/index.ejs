@@ -73,7 +73,7 @@
         width: fit-content;
         min-height: 2rem;
         background-color: gray;
-        padding: 20px 12px;
+        padding: 10px 12px;
         margin-bottom: 5px;
         word-break: break-word;
         border-radius: 10px;
@@ -145,6 +145,7 @@
         color: white;
       }
       header {
+        height: 4rem;
         background-color: #3333337b;
         border-radius: 12px;
         padding: 5px 10px;
@@ -154,8 +155,15 @@
         overflow: hidden;
         color: white;
       }
+      header > * {
+        font-size: 0.8rem;
+      }
       .chats::-webkit-scrollbar {
         display: none;
+      }
+      .showTyping {
+        color: rgba(128, 128, 128, 0.673);
+        min-width: 80px;
       }
     </style>
   </head>
@@ -177,10 +185,13 @@
 
       <div class="chatContainer">
         <header>
-          <p id="username">UserName :</p>
-          <p id="connectedTo">Connected to:</p>
+          <h5 id="username">username :</h5>
+          <p id="connectedTo"></p>
+          <p class="totalUser">Active Users: 1</p>
+          <p class="showTyping"></p>
         </header>
         <div class="chats">
+          <!-- eg for showing chats -->
           <!-- <div class="receivedMessage messages">Hellooo</div> -->
           <!-- <div class="wrap">
             <div class="sendMessage messages">Hiii</div>
@@ -191,6 +202,7 @@
         </div>
         <form class="chatForm">
           <input
+            autocomplete="off"
             placeholder="Enter Message"
             class="chatInput"
             type="text"
@@ -216,14 +228,21 @@
       //function calls
       stopFormReloadJoinChat();
       stopFormReload();
-
+      typingUpdate();
       //socket code
       function socketCode(socket) {
         // let username = document.querySelector(".username").value;
         socket.on("connect", () => {
           // console.log("socket is turned on ");
           // socket.emit("newUserJoined", username);
-
+          let timer = "";
+          socket.on("typing", () => {
+            clearTimeout(timer);
+            document.querySelector(".showTyping").textContent = "typing";
+            timer = setTimeout(function () {
+              document.querySelector(".showTyping").textContent = "";
+            }, 1000);
+          });
           socket.on("connectedTo", (username) => {
             // console.log("connected to", username);
             connectedTo = username;
@@ -237,6 +256,8 @@
             chats.innerHTML += `<div class="receivedMessage messages">${
               connectedTo + ": "
             }${val}</div>`;
+            //scroll to recent chats.
+            scrollToBottom();
           });
           socket.on("joinedInRoom", (romId) => {
             roomId = romId;
@@ -246,8 +267,7 @@
 
           socket.on("createNew", () => {
             // console.log("you have to connect with another.");
-            document.querySelector("#connectedTo").textContent =
-              "Connected to:";
+            document.querySelector("#connectedTo").textContent = "";
             chats.innerHTML = ` <div class="wrap">
             <div class="messages">Waiting for someone to join</div>
           </div>`;
@@ -281,6 +301,13 @@
             //socket intialization..
             const socket = io();
             globalSocket = socket;
+            // console.log(globalSocket);
+            socket.emit("newUserJoined");
+            socket.on("totalUser", (cnt) => {
+              document.querySelector(
+                ".totalUser"
+              ).textContent = `Active Users: ${cnt}`;
+            });
             socketCode(socket);
           });
       }
@@ -289,7 +316,21 @@
         chats.innerHTML += `<div class="wrap">
             <div class="sendMessage messages">${val}</div>
           </div>`;
+        scrollToBottom();
         globalSocket.emit("chatMessage", { val, roomId });
+      }
+
+      function typingUpdate() {
+        document
+          .querySelector(".chatInput")
+          .addEventListener("input", (event) => {
+            globalSocket.emit("typing");
+          });
+      }
+
+      // Function to scroll to the bottom of the chat container
+      function scrollToBottom() {
+        chats.scrollTop = chats.scrollHeight;
       }
     </script>
   </body>
