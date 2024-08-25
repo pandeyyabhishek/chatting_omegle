@@ -17,37 +17,34 @@ let roomIdObj = {};  //it store socket id1 & 2 with room Id
 let sockettoroom = {};
 //har do user ke liye ek room create kr ke join karwayege.
 io.on('connection', (socket) => {
-
     socket.on('joinroom', (username) => {
-        // console.log("--------------------req for new connection-------------------------");
         if (usersId.indexOf(socket.id) == -1) {
-            // console.log("pushing data in server id & name,");
             usersId.push(socket.id);
             usersName.push(username);
         }
         if (waitingUser.length == 0) {
-            // console.log("waiting me   hu");
             waitingUser.push(socket);
             return;
         } else {
-            // console.log("me kisi or ke sath join krne wala hun..");
+            const newUser = socket;
             const roomId = uuidv4();
             const waitinguser = waitingUser.pop();
-            const newUser = socket;
-            const waitingusername = usersName[usersId.indexOf(waitinguser.id)];
+            const ind = usersId.indexOf(waitinguser.id);
+            if (ind == -1) {
+                waitingUser = [];
+                waitingUser.push(socket);
+                return;
+            }
+            const waitingusername = usersName[ind];
             waitinguser.join(roomId);
             newUser.join(roomId);
-            // console.log("me is ke sath joinkrunga", waitingusername);
             io.to(roomId).emit('joinedInRoom', roomId);
             socket.emit('connectedTo', waitingusername);
             socket.broadcast.to(roomId).emit('connectedTo', username);
             let id1 = newUser.id, id2 = waitinguser.id;
-            // console.log("ids:", id1, id2);
             roomIdObj[roomId] = { id1, id2 };
-
             sockettoroom[id1] = roomId;
             sockettoroom[id2] = roomId;
-            // console.log(sockettoroom);
         }
 
     })
@@ -59,8 +56,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('disconnect', () => {
-        // console.log("one socket is disconnected");
-        // console.log(usersName);
         const i = socket.id;
         const tempInd = usersId.indexOf(i);
         if (tempInd != -1) {
@@ -76,22 +71,18 @@ io.on('connection', (socket) => {
         let s2 = socketIds.id2;
         const socket1 = io.sockets.sockets.get(s1);
         const socket2 = io.sockets.sockets.get(s2);
-        // console.log(socket.id);
         if (socket1) {
             socket.broadcast.to(roomId).emit('createNew');
             socket1.leave(roomId);
-            // waitingUser.push(socket1)
-            // console.log(`Socket ${s1} has left room ${roomId}`);
         }
         else if (socket2) {
             socket.broadcast.to(roomId).emit('createNew');
             socket2.leave(roomId);
-            // waitingUser.push(socket2)
-            // console.log(`Socket ${s2} has left room ${roomId}`);
-
         }
     })
 })
+
+
 httpServer.listen(3000, () => {
     console.log("Server is running on port 3000");
 })
