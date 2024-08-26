@@ -30,7 +30,7 @@
       }
       .chatContainer {
         width: 60%;
-        height: 80vh;
+        height: 85vh;
         margin: 10px 10px 0 10px;
         background-color: #282828;
         display: none;
@@ -55,7 +55,7 @@
       }
 
       .chatForm input {
-        height: 3rem;
+        height: 2.4rem;
         width: 80%;
         padding: 1rem;
         border-radius: 20px;
@@ -137,6 +137,7 @@
       }
       button {
         cursor: pointer;
+        font-size: 1rem;
       }
       button:active {
         scale: 0.97;
@@ -210,6 +211,7 @@
             type="text"
             name="msg" />
           <button type="submit">Send</button>
+          <button id="connectToAnother" type="button">Next</button>
         </form>
       </div>
     </div>
@@ -221,6 +223,11 @@
 
     <script>
       const chatForm = document.querySelector(".chatForm");
+      const connectToAnother = document.querySelector("#connectToAnother");
+      connectToAnother.addEventListener("click", () => {
+        // changeConnection();
+        window.location.reload();
+      });
       const chats = document.querySelector(".chats");
       let username = null;
       let globalSocket = null;
@@ -246,12 +253,16 @@
             }, 1000);
           });
           socket.on("connectedTo", (username) => {
-            // console.log("connected to", username);
+            console.log("connected to", username);
             connectedTo = username;
             document.querySelector("#connectedTo").textContent =
               "Connected To: " + username;
           });
           socket.emit("joinroom", username);
+
+          // socket.on("jointonew", () => {
+          //   socket.emit("joinroom", username);
+          // });
           // socket.emit('username',username);
           socket.on("messageFromServer", (val) => {
             // console.log(val, "chrkc");
@@ -337,6 +348,13 @@
       // Function to scroll to the bottom of the chat container
       function scrollToBottom() {
         chats.scrollTop = chats.scrollHeight;
+      }
+
+      function changeConnection() {
+        if (roomId == null || globalSocket == null) return;
+        // console.log(roomId);
+        // globalSocket.emit("changeConnection");
+        console.log("req for changing a user is made.");
       }
     </script>
   </body>

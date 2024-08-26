@@ -5,6 +5,7 @@ const http = require('http')
 const httpServer = http.createServer(app);
 const io = socketIO(httpServer);
 const { v4: uuidv4 } = require('uuid');
+const { cursorTo } = require('readline');
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
@@ -95,6 +96,41 @@ io.on('connection', (socket) => {
             socket2.leave(roomId);
         }
     })
+
+    // socket.on('changeConnection', () => {
+    //     const i = socket.id;
+    //     const tempInd = usersId.indexOf(i);
+    //     // if (tempInd != -1) {
+    //     //     let name = usersName[tempInd];
+    //     //     usersId.splice(tempInd, 1);
+    //     //     usersName.splice(tempInd, 1);
+    //     // }
+    //     let roomId = sockettoroom[i];
+    //     if (roomId == undefined || roomId == null) return;
+
+    //     // let socketIds = roomIdObj[roomId];
+    //     // let s1 = socketIds.id1;
+    //     // let s2 = socketIds.id2;
+    //     // const socket1 = io.sockets.sockets.get(s1);
+    //     // const socket2 = io.sockets.sockets.get(s2);
+    //     // if (socket1) {
+    //     //     console.log(usersName[s1]);
+    //     //     socket.broadcast.to(roomId).emit('createNew');
+    //     //     socket1.leave(roomId);
+    //     // }
+    //     // if (socket2) {
+    //     //     console.log(usersName[s2]);
+    //     //     socket.broadcast.to(roomId).emit('createNew');
+    //     //     socket2.leave(roomId);
+    //     // }
+    //     const tempsocket = io.sockets.sockets.get(i);
+    //     if (tempsocket) {
+    //         socket.broadcast.to(roomId).emit('createNew');
+    //         tempsocket.leave(roomId);
+    //     }
+
+    //     socket.emit('jointonew');
+    // })
 })
 
 
